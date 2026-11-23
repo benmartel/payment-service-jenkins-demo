@@ -1,12 +1,19 @@
 // Starts the packaged service and checks it serves real traffic.
 const { spawn } = require('node:child_process');
+const net = require('node:net');
 const path = require('node:path');
 
-const port = Number(process.env.SMOKE_PORT) || 3100;
-const server = spawn(process.execPath, [path.join(__dirname, '..', 'src', 'server.js')], {
-  env: { ...process.env, PORT: String(port) },
-  stdio: 'inherit',
-});
+function findFreePort() {
+  return new Promise((resolve, reject) => {
+    const probe = net.createServer().once('error', reject);
+    probe.listen(0, '127.0.0.1', () => {
+      const { port } = probe.address();
+      probe.close(() => resolve(port));
+    });
+  });
+}
+
+let server;
 
 async function waitForHealthy(url, attempts = 30) {
   for (let i = 0; i < attempts; i++) {
@@ -22,6 +29,11 @@ async function waitForHealthy(url, attempts = 30) {
 }
 
 async function main() {
+  const port = await findFreePort();
+  server = spawn(process.execPath, [path.join(__dirname, '..', 'src', 'server.js')], {
+    env: { ...process.env, PORT: String(port) },
+    stdio: 'inherit',
+  });
   const base = `http://127.0.0.1:${port}`;
   await waitForHealthy(`${base}/health`);
   console.log('smoke: /health OK');
@@ -44,7 +56,7 @@ main()
     console.log('smoke: PASSED');
   })
   .catch((err) => {
-    server.kill('SIGTERM');
+    server?.kill('SIGTERM');
     console.error(`smoke: FAILED - ${err.message}`);
     process.exit(1);
   });
