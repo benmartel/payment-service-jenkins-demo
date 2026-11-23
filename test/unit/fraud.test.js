@@ -20,8 +20,8 @@ test('a large payment to a high-risk country is blocked', () => {
   assert.equal(evaluate({ ...ordinary, amount: 30_000, country: 'XA' }).decision, 'block');
 });
 
-test('rapid-fire payments at night to a new destination go to review', () => {
-  assert.equal(evaluate({ ...ordinary, hour: 3, paymentsLastHour: 8, newDestination: true }).decision, 'review');
+test('rapid-fire payments at night to a new destination are blocked', () => {
+  assert.equal(evaluate({ ...ordinary, hour: 3, paymentsLastHour: 8, newDestination: true }).decision, 'block');
 });
 
 test('scores are capped at 100', () => {

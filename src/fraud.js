@@ -9,7 +9,7 @@ function scoreTransaction(txn) {
   if (txn.newDestination) score += 20;
   if (HIGH_RISK_COUNTRIES.includes(txn.country)) score += 40;
   if (txn.hour < 5) score += 10;
-  if (txn.paymentsLastHour >= 5) score += 25;
+  if (txn.paymentsLastHour >= 5) score += 70;
   return Math.min(score, 100);
 }
 
